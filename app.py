@@ -44,33 +44,41 @@ def store_mentionedId(since_id):
     file_write.close()
     return
 
+def split_date(id):
+    id = str(id)
+    datestr = "".join(list(id)[:14])
+    return int(datestr)
+
 def like_retweet_hashags():
     since = read_sinceid()
-    tweets = client.search_recent_tweets(query=query, since_id=since, max_results=100, user_auth=True)
+    tweets = client.search_recent_tweets(query=query, since_id=since, max_results=10, user_auth=True)
     if tweets.data != None:
         for tweet in tweets.data:
             client.like(tweet_id=tweet.id)
             client.retweet(tweet_id=tweet.id)
-            store_untilid(tweet.id)
+            if tweet.id > since:
+                store_untilid(tweet.id)
     else:
         print("Found nothing to like and retweet in hashtags")
 
 def like_mentions():
     since = read_mentionedId()
-
-    tweets = client.get_users_mentions(id=kaavish_id, since_id=since, user_auth=True)
+    tweets = client.get_users_mentions(id=kaavish_id, since_id=since, max_results=10, user_auth=True)
     if tweets.data != None:
         for tweet in tweets.data:
             client.like(tweet_id=tweet.id)
             print(tweet.id)
-            store_mentionedId(tweet.id)
+            if tweet.id > since:
+                store_mentionedId(tweet.id)
     else:
         print("Found nothing to like in mentioned tweets")
 
 
 
 while True:
+    print("Liking and retweeting hashtags")
     like_retweet_hashags()
+    print("Liking mentions")
     like_mentions()
     print("Now Sleeping")
     time.sleep(900)
